@@ -100,15 +100,9 @@ $(() => {
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
 	});
 
-<<<<<<< HEAD
   socket.on("end game", archiveUrl => {
     $snippetInput.hide();
 		$snippetButton.hide();
 		$words.html('This story is now ended. You can view it <a href="'+archiveUrl+'">here</a>.');
   });
-=======
-	socket.on("end game", archiveUrl => {
-		//archive
-	});
->>>>>>> 89d35d837f1447fda8e9772c29c4801fe9eaac2e
 });
