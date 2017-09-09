@@ -26,7 +26,7 @@ app.use(methodOverride());
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
 const MIN_ROOM_SIZE = 3;
-const MAX_ROOM_SIZE = 3;
+const MAX_ROOM_SIZE = 4;
 const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
