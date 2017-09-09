@@ -200,6 +200,7 @@ io.on("connection", socket => {
         var wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
 			  io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
         if (isOver) {
+					console.log('get the fuck out');
 					var redirect = 'archive.html'
         	var request = require('request');
 					request.post(
@@ -255,16 +256,20 @@ io.on("connection", socket => {
 	});
 });
 
+
+
+
+
 /*
 Connecting to the database
 */
-const promise = mongoose.connect("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive", {
-	useMongoClient: true,
-});
-
-promise.then(db => {
-	connection.openUri("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive");
-});
+var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
+  	useMongoClient: true,
+  });
+ 
+ promise.then(function(db) {
+ 	connection.openUri('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
+ });
 
 
 // define schema ============================

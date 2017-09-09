@@ -14,13 +14,14 @@
 <div ng-repeat="story in stories">
 	<a href="#!/stories/{{story._id}}" class="list-group-item list-group-item-action flex-column align-items-start">
 
-		<div class="d-flex w-100 justify-content-between">
+		<div class="">
 			<h5 class="mb-1">{{story.title}}</h5>
-			<small class="text-muted">{{story.datetime}}</small>
+			
+			
 		</div>
 		<p class="mb-1">{{getShortText(story.text)}}</p>
 
-		<small class="text-muted">{{story.wordcount}} words</small>
+		<small class="text-muted">{{getDateString(story.datetime)}}</small>
 
 	</a>
 	
