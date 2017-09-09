@@ -40,14 +40,14 @@ let filledForm = false;
 
 // Add more colors as you see fit
 const colors = [
-	"Crimson",
-	"Peru",
-	"DarkKhaki",
-	"LimeGreen",
-	"SeaGreen",
-	"DarkTurquoise",
-	"RoyalBlue",
-	"Indigo"
+	"rgb(7, 107, 255)",
+	"rgb(133, 142, 151)",
+	"rgb(0, 176, 72)",
+	"rgb(241, 0, 49)",
+	"rgb(255, 195, 0)",
+	"rgb(0, 165, 187)",
+	"rgb(51, 58, 64)",
+	"rgb(128, 0, 128)"
 ];
 
 // There must be enough colors so that every user can have a unique one
@@ -139,14 +139,19 @@ io.on("connection", socket => {
 		}));
 	user.color = userColor;
 
+	io.to(user.socketID).emit("selfJoin", user);
+
 	// Tell everyone in the room that someone has joined
 	io.to(room.ID).emit("join", room);
 
 	// The game has started once the room is full
 	if (room.users.length === MAX_ROOM_SIZE) {
 		room.started = true;
-		io.to(room.users[0].socketID).emit("startTurn");
-		room.users[0].usersTurn = true;
+
+		const nextUser = room.users[0];
+		nextUser.usersTurn = true;
+		io.to(room.ID).emit("changeTurns", room);
+		io.to(nextUser.socketID).emit("startTurn");
 	}
 
 	function nextTurn() {
@@ -157,8 +162,9 @@ io.on("connection", socket => {
 		// Start the next user's turn
 		const nextIndex = (room.users.indexOf(user) + 1) % room.users.length;
 		const nextUser = room.users[nextIndex];
-		io.to(nextUser.socketID).emit("startTurn");
 		nextUser.usersTurn = true;
+		io.to(room.ID).emit("changeTurns", room);
+		io.to(nextUser.socketID).emit("startTurn");
 	}
 
 	socket.on("snippet", snippet => {

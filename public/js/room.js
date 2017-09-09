@@ -4,17 +4,33 @@ $(() => {
 	const $story = $("#story");
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
-	const $snippetButton = $("#snippet-button")
+	const $snippetButton = $("#snippet-button");
+
+	let selfUser;
 
 	function updateUsers(room) {
 		$users.empty();
 
 		for (let i = 0; i < room.users.length; i++) {
 			const user = room.users[i];
+			let meBadge = "";
+			let timeBadge = "";
+
+			if (selfUser.socketID === user.socketID) {
+				meBadge = `<span class="badge badge-pill badge-primary"> Me </span>`;
+			}
+
+			if (user.usersTurn) {
+				timeBadge = `<span class="badge badge-pill badge-warning"> ${30} seconds left </span>`;
+			}
+
 			$users.append(`
-			<li class="list-group-item" style="color: ${user.color}">
-				<span class="badge badge-pill badge-secondary"> ${i + 1} </span> ${user.name}
-			</li>`);
+				<li class="list-group-item" style="color: ${user.color}">
+					<span class="badge badge-pill badge-dark"> ${i + 1} </span>
+					${user.name}
+					${meBadge}
+					${timeBadge}
+				</li>`);
 		}
 
 		if (room.usersNeeded > 0) {
@@ -22,9 +38,8 @@ $(() => {
 		}
 	}
 
-
 	// A player will receive "start_turn" when it reaches their turn
-	socket.on("startTurn", function() {
+	socket.on("startTurn", () => {
 		// Add big textbox or pop-up saying "IT'S YOUR TURN!"
 		// Include visual timer display to count down time left
 		console.log("Your turn!")
@@ -34,15 +49,22 @@ $(() => {
 	});
 
 	// A player will receive "end_turn" once they've entered a snippet or time runs out
-	socket.on("endTurn", function() {
+	socket.on("endTurn", () => {
 		console.log("Your turn is over.")
 
 		$snippetInput.attr("disabled", true);
 		$snippetButton.attr("disabled", true);
 	});
 
+	socket.on("selfJoin", user => {
+		selfUser = user;
+	});
 
 	socket.on("join", room => {
+		updateUsers(room);
+	});
+
+	socket.on("changeTurns", room => {
 		updateUsers(room);
 	});
 
