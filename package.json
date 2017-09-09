@@ -1,6 +1,6 @@
 {
 	"name": "pineapple-express",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
@@ -18,7 +18,8 @@
 	"license": "MIT",
 	"dependencies": {
 		"express": "^4.15.4",
-		"socket.io": "^2.0.3"
+		"socket.io": "^2.0.3",
+		"body-parser": "^1.18.0"
 	},
 	"devDependencies": {}
 }
