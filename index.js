@@ -173,23 +173,27 @@ io.on("connection", socket => {
 		// Only send snippets if the game has begun
 		if (room.started) {
 			console.log("snippet: " + snippet);
-			io.to(room.ID).emit("snippet", snippet, user.color); //I changed this from "io.emit" --> "io.to(room.ID).emit"
-
-			// End that player's turn and start the next player's turn.
-			for(var i = 0; i < users.length; i++) {
-				if (users[i].players_turn === true) {
-					io.to(room.users[i].socketID).emit("end_turn");
-					users[i].players_turn = false;
-					if (i != users.length - 1) {
-						io.to(room.users[i+1].socketID).emit("start_turn");
-						users[i+1].players_turn = true;
-					} else {
-						io.to(room.users[0].socketID).emit("start_turn");
-						users[0].players_turn = true;
-					}
-					i = users.length;
-				}
-			}
+      if (validSnippet) {
+			  io.to(room.ID).emit("snippet", snippet, user.color); //I changed this from "io.emit" --> "io.to(room.ID).emit"
+        // End that player's turn and start the next player's turn.
+        for(var i = 0; i < users.length; i++) {
+          if (users[i].players_turn === true) {
+            io.to(room.users[i].socketID).emit("end_turn");
+            users[i].players_turn = false;
+            if (i != users.length - 1) {
+              io.to(room.users[i+1].socketID).emit("start_turn");
+              users[i+1].players_turn = true;
+            } else {
+              io.to(room.users[0].socketID).emit("start_turn");
+              users[0].players_turn = true;
+            }
+            i = users.length;
+          }
+        }
+        return "";
+      } else {
+        return 'You may submit a maximum of '+MAX_WORDS_PER_TURN+'words and '+MAX_CHARS_PER_TURN+' characters in a turn';
+      }
 		}
 	});
 });

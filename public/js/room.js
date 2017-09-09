@@ -1,10 +1,11 @@
-$(() => {
+$(() => :Tab{
 	const socket = io();
 	const $users = $("#users");
 	const $story = $("#story");
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
 	const $snippetButton = $("#snippet-button")
+  const $errors = $('#errors');
 
 	function updateUsers(room) {
 		$users.empty();
@@ -54,18 +55,13 @@ $(() => {
 	});
 
 	$form.submit(() => {
-		socket.emit("snippet", $snippetInput.val().trim());
+		socket.emit("snippet", $snippetInput.val().trim(), function(msg) {
+      $errors.val(msg);
+    });
 		$snippetInput.val("");
 		return false;
 	});
 
 	socket.on("snippet", (snippet, color) => {
-                validTurn = true;
-                storyComplete = false;
-                if (validTurn && !storyComplete) {
-		        $story.append(`<span style="color: ${color}"> ${snippet}</span>`);
-                }
-	});
-
-        socket.on("vote to archive",
-});
+		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
+  });
