@@ -228,11 +228,6 @@ io.on("connection", socket => {
 
 
 
-
-
-//mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
-
-
 var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
 	useMongoClient: true,
 });
@@ -309,7 +304,7 @@ app.post('/api/stories', function(req, res) {
 		if(err) {
 			res.send(err);
 		} else {
-			res.status(200).send('Success! Story submitted.');
+			res.status(200).send('Success! Story submitted. Id: ' + story._id);
 		}
 	});
 });

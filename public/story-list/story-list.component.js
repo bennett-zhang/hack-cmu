@@ -41,6 +41,24 @@ angular.
             }
             return shortText.substring(0, shortText.length - 1) + "...";
         }
+
+        $scope.getDateString = function(dateObj) {
+            // return dateObj.getMonth() + 1 + "/" +
+            //         dateObj.getDay() + "/" +
+            //         dateObj.getFullYear() + "\n" +
+            //         dateObj.getHours() + ":" +
+            //         dateObj.getMinutes();
+           
+            return dateObj.substring(0, 10) + " " + 
+            dateObj.substring(11, 19);
+                
+        }
+
+        // $scope.getTimeString = function(dateObj) {
+           
+        //     return dateObj.substring(11, 19);
+
+        // }
       
     }]
   });
