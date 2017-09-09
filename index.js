@@ -5,12 +5,27 @@ const app = express();
 const http = require("http").Server(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(http);
-const bodyParser = require("body-parser");
+const mongoose = require('mongoose');		// interact with MongoDB
+const morgan = require('morgan');             // log requests to the console (express4)
+const bodyParser = require('body-parser');    // pull information from HTML POST (express4)
+const methodOverride = require('method-override'); // simulate DELETE and PUT (express4)
+
+
+app.use(express.static("public"));
+app.use(morgan('dev'));                                         // log every request to the console
+app.use(bodyParser.urlencoded({'extended':'true'}));            // parse application/x-www-form-urlencoded
+app.use(bodyParser.json());                                     // parse application/json
+app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
+app.use(methodOverride());
+
+
+
+
 
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
-const MIN_ROOM_SIZE = 3;
-const MAX_ROOM_SIZE = 5; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
+const MIN_ROOM_SIZE = 2;
+const MAX_ROOM_SIZE = 3; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
 const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
@@ -41,14 +56,14 @@ let filledForm = false;
 
 // Add more colors as you see fit
 const colors = [
-	"Crimson",
-	"Peru",
-	"DarkKhaki",
-	"LimeGreen",
-	"SeaGreen",
-	"DarkTurquoise",
-	"RoyalBlue",
-	"Indigo"
+	"rgb(7, 107, 255)",
+	"rgb(133, 142, 151)",
+	"rgb(0, 176, 72)",
+	"rgb(241, 0, 49)",
+	"rgb(255, 195, 0)",
+	"rgb(0, 165, 187)",
+	"rgb(51, 58, 64)",
+	"rgb(128, 0, 128)"
 ];
 
 // There must be enough colors so that every user can have a unique one
@@ -141,14 +156,19 @@ io.on("connection", socket => {
 		}));
 	user.color = userColor;
 
+	io.to(user.socketID).emit("selfJoin", user);
+
 	// Tell everyone in the room that someone has joined
 	io.to(room.ID).emit("join", room);
 
 	// The game has started once the room is full
 	if (room.users.length === MAX_ROOM_SIZE) {
 		room.started = true;
-		io.to(room.users[0].socketID).emit("startTurn");
-		room.users[0].usersTurn = true;
+
+		const nextUser = room.users[0];
+		nextUser.usersTurn = true;
+		io.to(room.ID).emit("changeTurns", room);
+		io.to(nextUser.socketID).emit("startTurn");
 	}
 
 	function nextTurn() {
@@ -159,17 +179,19 @@ io.on("connection", socket => {
 		// Start the next user's turn
 		const nextIndex = (room.users.indexOf(user) + 1) % room.users.length;
 		const nextUser = room.users[nextIndex];
-		io.to(nextUser.socketID).emit("startTurn");
 		nextUser.usersTurn = true;
+		io.to(room.ID).emit("changeTurns", room);
+		io.to(nextUser.socketID).emit("startTurn");
 	}
-  
+
 	socket.on("snippet", (snippet, validate) => {
 		console.log(room.started && user.usersTurn);
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
 			console.log("snippet: " + snippet);
       var numWords = snippet.split(' ').length;
-      var validSnippet = numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
+      var isEmpty = snippet.replace(' ','').length == 0;
+      var validSnippet = !isEmpty && numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
       if (validSnippet) {
         room.storyText += ' '+snippet;
         var storyLength = room.storyText.split(' ').length;
@@ -183,7 +205,7 @@ io.on("connection", socket => {
         }
         nextTurn();
       } else {
-        validate('You may submit a maximum of '+MAX_WORDS_PER_TURN+' words and '+MAX_CHARS_PER_TURN+' characters in a turn');
+        validate('You must submit between 1 and '+MAX_WORDS_PER_TURN+' words and a maximum of '+MAX_CHARS_PER_TURN+' characters in a turn');
       }
 		}
 	});
@@ -211,6 +233,124 @@ io.on("connection", socket => {
 		io.to(room.ID).emit("leave", room);
 	});
 });
+
+
+
+
+
+
+
+
+
+//mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
+
+
+var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
+	useMongoClient: true,
+});
+
+promise.then(function(db) {
+	connection.openUri('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
+});
+
+
+// define schema ============================
+var Schema = mongoose.Schema;
+
+var storySchema = new Schema({
+	title: String,
+	text: String,
+	datetime: Date,
+	wordcount: Number,
+	upvotes: Number,
+	downvotes: Number,
+	netvotes: Number
+});
+
+var Story = mongoose.model('Story', storySchema);
+
+
+
+// routes ======================================================================
+
+
+// get all stories
+app.get('/api/stories', function(req, res) {
+	
+	// use mongoose to get all stories in the database
+	Story.find(function(err, stories) {
+
+		// if error in retrieving, send that error
+		if(err) {
+			res.send(err);
+		}
+
+		res.json(stories); // return all stories in JSON format
+	});
+});
+
+// get one story
+app.get('/api/stories/:story_id', function(req, res) {
+
+	// use mongoose to get one story in the database
+	Story.findOne({_id : req.params.story_id}, function(err, story) {
+
+		// if error in retrieving, send that error
+		if(err) {
+			res.send(err);
+		}
+
+		res.json(story); // return one story in JSON format
+	});
+});
+
+// create a story and send all stories after creation
+app.post('/api/stories', function(req, res) {
+
+	Story.create({
+
+		title: req.body.title,
+		text: req.body.text,
+		datetime: req.body.datetime,
+		wordcount: req.body.wordcount,
+		upvotes: req.body.upvotes,
+		downvotes: req.body.downvotes,
+		netvotes: req.body.netvotes
+
+	}, function(err, story) {
+		if(err) {
+			res.send(err);
+		} else {
+			res.status(200).send('Success! Story submitted.');
+		}
+	});
+});
+
+// delete a story
+app.delete('/api/stories/:story_id', function(req, res) {
+	Story.remove({
+		_id : req.params.story_id
+	}, function(err, story) {
+		if(err) {
+			res.send(err);
+		}
+
+		// get and return all stories after deleting one
+		Story.find(function(err, stories) {
+                if(err) {
+                    res.send(err)
+                }
+                res.json(stories);
+        });
+	});
+});
+
+
+
+app.get("/", (req, res) => {
+	res.sendFile(__dirname + "/public/index.html");
+});
+
 
 http.listen(port, () => {
 	console.log(`Listening on ${port}.`);

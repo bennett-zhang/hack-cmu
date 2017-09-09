@@ -4,18 +4,36 @@ $(() => {
 	const $story = $("#story");
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
-	const $snippetButton = $("#snippet-button")
-  const $errors = $('#errors');
+	const $snippetButton = $("#snippet-button");
+	let selfUser;
+	const $errors = $("#errors");
+  const $words = $("#words");
+  $words.hide();
+	$errors.hide();
 
 	function updateUsers(room) {
 		$users.empty();
 
 		for (let i = 0; i < room.users.length; i++) {
 			const user = room.users[i];
+			let meBadge = "";
+			let timeBadge = "";
+
+			if (selfUser.socketID === user.socketID) {
+				meBadge = `<span class="badge badge-pill badge-primary"> Me </span>`;
+			}
+
+			if (user.usersTurn) {
+				timeBadge = `<span class="badge badge-pill badge-warning"> ${30} seconds left </span>`;
+			}
+
 			$users.append(`
-			<li class="list-group-item" style="color: ${user.color}">
-				<span class="badge badge-pill badge-secondary"> ${i + 1} </span> ${user.name}
-			</li>`);
+				<li class="list-group-item" style="color: ${user.color}">
+					<span class="badge badge-pill badge-dark"> ${i + 1} </span>
+					${user.name}
+					${meBadge}
+					${timeBadge}
+				</li>`);
 		}
 
 		if (room.usersNeeded > 0) {
@@ -23,9 +41,8 @@ $(() => {
 		}
 	}
 
-
 	// A player will receive "start_turn" when it reaches their turn
-	socket.on("startTurn", function() {
+	socket.on("startTurn", () => {
 		// Add big textbox or pop-up saying "IT'S YOUR TURN!"
 		// Include visual timer display to count down time left
 		console.log("Your turn!")
@@ -35,15 +52,22 @@ $(() => {
 	});
 
 	// A player will receive "end_turn" once they've entered a snippet or time runs out
-	socket.on("endTurn", function() {
+	socket.on("endTurn", () => {
 		console.log("Your turn is over.")
 
 		$snippetInput.attr("disabled", true);
 		$snippetButton.attr("disabled", true);
 	});
 
+	socket.on("selfJoin", user => {
+		selfUser = user;
+	});
 
 	socket.on("join", room => {
+		updateUsers(room);
+	});
+
+	socket.on("changeTurns", room => {
 		updateUsers(room);
 	});
 
@@ -52,18 +76,19 @@ $(() => {
 	});
 
 	$form.submit(() => {
-		socket.emit("snippet", $snippetInput.val().trim(), function (msg) {
-      console.log('ready to display message');
-      $errors.val(msg);
-      $errors.css('color: red;');
-    });
+		socket.emit("snippet", $snippetInput.val().trim(), msg => {
+			console.log("ready to display message");
+			$errors.show();
+			$errors.text(msg);
+		});
 		$snippetInput.val("");
 		return false;
 	});
 
 	socket.on("snippet", (snippet, color, wordsLeft) => {
-    $errors.val(wordsLeft+' words left in the story');
-    $errors.css('color: black;');
+    $errors.hide();
+    $words.text(wordsLeft+' words left in the story');
+    $words.show();
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
   });
 

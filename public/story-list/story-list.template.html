@@ -1,0 +1,55 @@
+<div class="container">
+
+<div class="row justify-content-center">
+
+<div class="col-md-8">
+
+<a class="btn btn-outline-primary my-3" href="index.html">Back</a>
+
+<h4 class="display-4 mb-4">Story Archive</h4>
+
+
+<div class="list-group">
+
+<div ng-repeat="story in stories">
+	<a href="#!/stories/{{story._id}}" class="list-group-item list-group-item-action flex-column align-items-start">
+
+		<div class="d-flex w-100 justify-content-between">
+			<h5 class="mb-1">{{story.title}}</h5>
+			<small class="text-muted">{{story.datetime}}</small>
+		</div>
+		<p class="mb-1">{{getShortText(story.text)}}</p>
+
+		<small class="text-muted">{{story.wordcount}} words</small>
+
+	</a>
+	
+	
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- <ul>
+
+<li ng-repeat="story in stories">
+	
+	<a href="#!/stories/{{story._id}}">Full story</a>
+	<p>{{story.datetime}}</p>
+	<p>{{story.wordcount}} words</p>
+	<h3>{{story.title}}</h3>
+
+	<div>
+		{{getShortText(story.text)}}
+	</div>
+
+	<button ng-click="deleteStory(story._id)">Delete</button>
+</li>
+
+</ul> -->
+
