@@ -1,1 +1,1 @@
-# hack-cmu
+# Bit Stories

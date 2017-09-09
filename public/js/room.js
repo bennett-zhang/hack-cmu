@@ -5,11 +5,11 @@ $(() => {
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
 	const $snippetButton = $("#snippet-button");
-	let selfUser;
+	const $words = $("#words");
 	const $errors = $("#errors");
-  const $words = $("#words");
-  $words.hide();
-	$errors.hide();
+	let $timeLeft = $("#time-left");
+	let selfUser;
+	const MAX_TIME_PER_TURN = 30; // Make sure this agrees with index.js
 
 	function updateUsers(room) {
 		$users.empty();
@@ -24,7 +24,7 @@ $(() => {
 			}
 
 			if (user.usersTurn) {
-				timeBadge = `<span class="badge badge-pill badge-warning"> ${30} seconds left </span>`;
+				timeBadge = `<span id="time-left" class="badge badge-pill badge-warning"> ${MAX_TIME_PER_TURN} seconds left </span>`;
 			}
 
 			$users.append(`
@@ -34,12 +34,19 @@ $(() => {
 					${meBadge}
 					${timeBadge}
 				</li>`);
+
+			$timeLeft = $("#time-left");
 		}
 
 		if (room.usersNeeded > 0) {
 			$users.append(`<li class="list-group-item">${room.usersNeeded} users needed</li>`);
 		}
 	}
+
+	// Update timer badge
+	socket.on("updateTime", timeLeft => {
+		$timeLeft.text(` ${timeLeft} seconds left `);
+	});
 
 	// A player will receive "start_turn" when it reaches their turn
 	socket.on("startTurn", () => {
@@ -68,6 +75,7 @@ $(() => {
 	});
 
 	socket.on("changeTurns", room => {
+		console.log(room.users);
 		updateUsers(room);
 	});
 
@@ -86,15 +94,21 @@ $(() => {
 	});
 
 	socket.on("snippet", (snippet, color, wordsLeft) => {
-    $errors.hide();
-    $words.text(wordsLeft+' words left in the story');
-    $words.show();
+		$errors.hide();
+		$words.text(wordsLeft + ' words left in the story');
+		$words.show();
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
-  });
+	});
 
+<<<<<<< HEAD
   socket.on("end game", archiveUrl => {
     $snippetInput.hide();
 		$snippetButton.hide();
 		$words.html('This story is now ended. You can view it <a href="'+archiveUrl+'">here</a>.');
   });
+=======
+	socket.on("end game", archiveUrl => {
+		//archive
+	});
+>>>>>>> 89d35d837f1447fda8e9772c29c4801fe9eaac2e
 });

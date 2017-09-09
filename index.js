@@ -25,12 +25,13 @@ app.use(methodOverride());
 
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
-const MIN_ROOM_SIZE = 2;
-const MAX_ROOM_SIZE = 3; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
-const MAX_WORD_COUNT = 5;
+const MIN_ROOM_SIZE = 3;
+const MAX_ROOM_SIZE = 4;
+const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
 const MAX_CHARS_PER_TURN = 20; // When changing this, make sure to update the maxlength attribute for the text box
+const MAX_TIME_PER_TURN = 30; // Make sure this agrees with room.js
 
 const users = [];
 /* user
@@ -48,7 +49,8 @@ const rooms = [];
 	users, // Array of the users inside the room
 	usersNeeded, // How many users need to join before the game can start
 	started, // True when enough users have joined and the game has started
-  storyText // The plaintext version of the story
+	storyText, // The plaintext version of the story
+	time
 }
 */
 
@@ -136,7 +138,8 @@ io.on("connection", socket => {
 			ID: rooms.length,
 			users: [],
 			started: false,
-      storyText: "",
+			storyText: "",
+			time: 0
 		};
 		rooms.push(room);
 	}
@@ -170,19 +173,35 @@ io.on("connection", socket => {
 		nextUser.usersTurn = true;
 		io.to(room.ID).emit("changeTurns", room);
 		io.to(nextUser.socketID).emit("startTurn");
+
+		// Timer
+		setInterval(() => {
+			if (room.time < MAX_TIME_PER_TURN - 1) {
+				room.time++;
+				io.to(room.ID).emit("updateTime", MAX_TIME_PER_TURN - room.time);
+			} else {
+				room.time = 0;
+				nextTurn();
+			}
+		}, 1000);
 	}
 
 	function nextTurn() {
-		// End the current user's turn
-		io.to(user.socketID).emit("endTurn");
-		user.usersTurn = false;
+		for (let i = 0; i < room.users.length; i++) {
+			if (room.users[i].usersTurn) {
+				// End the current user's turn
+				io.to(room.users[i].socketID).emit("endTurn");
+				room.users[i].usersTurn = false;
 
-		// Start the next user's turn
-		const nextIndex = (room.users.indexOf(user) + 1) % room.users.length;
-		const nextUser = room.users[nextIndex];
-		nextUser.usersTurn = true;
-		io.to(room.ID).emit("changeTurns", room);
-		io.to(nextUser.socketID).emit("startTurn");
+				// Start the next user's turn
+				const nextIndex = (i + 1) % room.users.length;
+				const nextUser = room.users[nextIndex];
+				nextUser.usersTurn = true;
+				io.to(room.ID).emit("changeTurns", room);
+				io.to(nextUser.socketID).emit("startTurn");
+				break;
+			}
+		}
 	}
 
 	socket.on("snippet", (snippet, validate) => {
@@ -190,16 +209,16 @@ io.on("connection", socket => {
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
 			console.log("snippet: " + snippet);
-      var numWords = snippet.split(' ').length;
-      var isEmpty = snippet.replace(' ','').length == 0;
-      var validSnippet = !isEmpty && numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
-      if (validSnippet) {
-        room.storyText += ' '+snippet;
-        var storyLength = room.storyText.split(' ').length;
-        var isOver = storyLength >= MAX_WORD_COUNT;
-        var wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
-			  io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
-        if (isOver) {
+			const numWords = snippet.split(" ").length;
+			const isEmpty = snippet.replace(" ", "").length == 0;
+			const validSnippet = !isEmpty && numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
+			if (validSnippet) {
+				room.storyText += " " + snippet;
+				const storyLength = room.storyText.split(" ").length;
+				const isOver = storyLength >= MAX_WORD_COUNT;
+				const wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
+				io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
+				if (isOver) {
 					var redirect = 'archive.html';
 					Story.create({
 						title: room.storyText.split(' ').slice(0,5).join(" "),
@@ -215,11 +234,12 @@ io.on("connection", socket => {
 							io.to(room.ID).emit("end game", redirect);
 					});     
           io.to(room.ID).emit("end game", redirect);
-        }
-        nextTurn();
-      } else {
-        validate('You must submit between 1 and '+MAX_WORDS_PER_TURN+' words and a maximum of '+MAX_CHARS_PER_TURN+' characters in a turn');
-      }
+				}
+				room.time = 0;
+				nextTurn();
+			} else {
+				validate(`You must submit between 1 and ${MAX_WORDS_PER_TURN} words and a maximum of ${MAX_CHARS_PER_TURN} characters in a turn.`);
+			}
 		}
 	});
 
@@ -254,13 +274,13 @@ io.on("connection", socket => {
 /*
 Connecting to the database
 */
-var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
-  	useMongoClient: true,
-  });
- 
- promise.then(function(db) {
- 	connection.openUri('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
- });
+const promise = mongoose.connect("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive", {
+	useMongoClient: true,
+});
+
+promise.then(function(db) {
+	connection.openUri("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive");
+});
 
 
 // define schema ============================
