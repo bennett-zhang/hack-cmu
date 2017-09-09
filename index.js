@@ -26,7 +26,7 @@ app.use(methodOverride());
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
 const MIN_ROOM_SIZE = 3;
-const MAX_ROOM_SIZE = 3; // MAX ROOM SIZE IS 3 ONLY FOR TESTING PURPOSES
+const MAX_ROOM_SIZE = 8;
 const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
@@ -49,7 +49,8 @@ const rooms = [];
 	ID,
 	users, // Array of the users inside the room
 	usersNeeded, // How many users need to join before the game can start
-	started // True when enough users have joined and the game has started
+	started, // True when enough users have joined and the game has started
+  storyText // The plaintext version of the story
 }
 */
 
@@ -136,7 +137,8 @@ io.on("connection", socket => {
 		room = {
 			ID: rooms.length,
 			users: [],
-			started: false
+			started: false,
+			storyText: "",
 		};
 		rooms.push(room);
 	}
@@ -205,15 +207,24 @@ io.on("connection", socket => {
 		console.log(room.started && user.usersTurn);
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
-			console.log(`snippet: ${snippet}`);
-			const validSnippet = snippet.split(" ").length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
-
+			console.log("snippet: " + snippet);
+			const numWords = snippet.split(" ").length;
+			const isEmpty = snippet.replace(" ", "").length == 0;
+			const validSnippet = !isEmpty && numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
 			if (validSnippet) {
-				io.to(room.ID).emit("snippet", snippet, user.color);
+				room.storyText += " " + snippet;
+				const storyLength = room.storyText.split(" ").length;
+				const isOver = storyLength >= MAX_WORD_COUNT;
+				const wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
+				io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
+				if (isOver) {
+					//archive story here
+					const archiveUrl = "";
+					io.to(room.ID).emit("end game", archiveUrl);
+				}
 				nextTurn();
-				validate("");
 			} else {
-				validate(`You may submit a maximum of ${MAX_WORDS_PER_TURN} words and ${MAX_CHARS_PER_TURN} characters in a turn.`);
+				validate(`You must submit between 1 and ${MAX_WORDS_PER_TURN} words and a maximum of ${MAX_CHARS_PER_TURN} characters in a turn.`);
 			}
 		}
 	});
@@ -242,6 +253,10 @@ io.on("connection", socket => {
 	});
 });
 
+
+
+
+
 /*
 Connecting to the database
 */
@@ -249,7 +264,7 @@ const promise = mongoose.connect("mongodb://abdn:morewood35@ds145828.mlab.com:45
 	useMongoClient: true,
 });
 
-promise.then(db => {
+promise.then(function(db) {
 	connection.openUri("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive");
 });
 
@@ -322,7 +337,8 @@ app.post("/api/stories", (req, res) => {
 		if (err) {
 			res.send(err);
 		} else {
-			res.status(200).send("Success! Story submitted.");
+			res.status(200).send(story._id);
+
 		}
 	});
 });
