@@ -40,6 +40,12 @@ $(() => {
 	});
 
 	socket.on("snippet", (snippet, color) => {
-		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
+                validTurn = true;
+                storyComplete = false;
+                if (validTurn && !storyComplete) {
+		        $story.append(`<span style="color: ${color}"> ${snippet}</span>`);
+                }
 	});
+
+        socket.on("vote to archive",
 });
