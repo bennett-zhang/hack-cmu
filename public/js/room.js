@@ -5,16 +5,11 @@ $(() => {
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
 	const $snippetButton = $("#snippet-button");
+	const $words = $("#words");
+	const $errors = $("#errors");
 	let $timeLeft = $("#time-left");
 	let selfUser;
-	const $errors = $("#errors");
-<<<<<<< HEAD
-	const MAX_TIME_PER_TURN = 10; // Make sure this agrees with index.js
-=======
-  const $words = $("#words");
-  $words.hide();
-	$errors.hide();
->>>>>>> 7baacf8660063c35f78c9ac38c23c3095aed92d1
+	const MAX_TIME_PER_TURN = 30; // Make sure this agrees with index.js
 
 	function updateUsers(room) {
 		$users.empty();
@@ -99,13 +94,13 @@ $(() => {
 	});
 
 	socket.on("snippet", (snippet, color, wordsLeft) => {
-    $errors.hide();
-    $words.text(wordsLeft+' words left in the story');
-    $words.show();
+		$errors.hide();
+		$words.text(wordsLeft + ' words left in the story');
+		$words.show();
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
-  });
+	});
 
-  socket.on("end game", archiveUrl => {
-    //archive
-  });
+	socket.on("end game", archiveUrl => {
+		//archive
+	});
 });
