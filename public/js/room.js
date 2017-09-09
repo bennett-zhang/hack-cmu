@@ -7,6 +7,9 @@ $(() => {
 	const $snippetButton = $("#snippet-button");
 	let selfUser;
 	const $errors = $("#errors");
+  const $words = $("#words");
+  $words.hide();
+	$errors.hide();
 
 	function updateUsers(room) {
 		$users.empty();
@@ -75,18 +78,21 @@ $(() => {
 	$form.submit(() => {
 		socket.emit("snippet", $snippetInput.val().trim(), msg => {
 			console.log("ready to display message");
-			if (msg) {
-				$errors.show();
-				$errors.text(msg);
-			} else {
-				$errors.hide();
-			}
+			$errors.show();
+			$errors.text(msg);
 		});
 		$snippetInput.val("");
 		return false;
 	});
 
-	socket.on("snippet", (snippet, color) => {
+	socket.on("snippet", (snippet, color, wordsLeft) => {
+    $errors.hide();
+    $words.text(wordsLeft+' words left in the story');
+    $words.show();
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
-	});
+  });
+
+  socket.on("end game", archiveUrl => {
+    //archive
+  });
 });
