@@ -26,13 +26,12 @@ app.use(methodOverride());
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
 const MIN_ROOM_SIZE = 3;
-const MAX_ROOM_SIZE = 8;
+const MAX_ROOM_SIZE = 3;
 const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
 const MAX_CHARS_PER_TURN = 20; // When changing this, make sure to update the maxlength attribute for the text box
-const MAX_TIME_PER_TURN = 10; // Make sure this agrees with room.js
-let time = 0;
+const MAX_TIME_PER_TURN = 30; // Make sure this agrees with room.js
 
 const users = [];
 /* user
@@ -50,7 +49,8 @@ const rooms = [];
 	users, // Array of the users inside the room
 	usersNeeded, // How many users need to join before the game can start
 	started, // True when enough users have joined and the game has started
-  storyText // The plaintext version of the story
+	storyText, // The plaintext version of the story
+	time
 }
 */
 
@@ -139,6 +139,7 @@ io.on("connection", socket => {
 			users: [],
 			started: false,
 			storyText: "",
+			time: 0
 		};
 		rooms.push(room);
 	}
@@ -175,11 +176,11 @@ io.on("connection", socket => {
 
 		// Timer
 		setInterval(() => {
-			if (time < MAX_TIME_PER_TURN - 1) {
-				time++;
-				io.to(room.ID).emit("updateTime", MAX_TIME_PER_TURN - time);
+			if (room.time < MAX_TIME_PER_TURN - 1) {
+				room.time++;
+				io.to(room.ID).emit("updateTime", MAX_TIME_PER_TURN - room.time);
 			} else {
-				time = 0;
+				room.time = 0;
 				nextTurn();
 			}
 		}, 1000);
@@ -222,6 +223,7 @@ io.on("connection", socket => {
 					const archiveUrl = "";
 					io.to(room.ID).emit("end game", archiveUrl);
 				}
+				room.time = 0;
 				nextTurn();
 			} else {
 				validate(`You must submit between 1 and ${MAX_WORDS_PER_TURN} words and a maximum of ${MAX_CHARS_PER_TURN} characters in a turn.`);
