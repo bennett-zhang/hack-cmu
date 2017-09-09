@@ -26,11 +26,13 @@ app.use(methodOverride());
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
 const MIN_ROOM_SIZE = 3;
-const MAX_ROOM_SIZE = 5; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
+const MAX_ROOM_SIZE = 3; // MAX ROOM SIZE IS 3 ONLY FOR TESTING PURPOSES
 const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
 const MAX_CHARS_PER_TURN = 20; // When changing this, make sure to update the maxlength attribute for the text box
+const MAX_TIME_PER_TURN = 10; // Make sure this agrees with room.js
+let time = 0;
 
 const users = [];
 /* user
@@ -168,33 +170,50 @@ io.on("connection", socket => {
 		nextUser.usersTurn = true;
 		io.to(room.ID).emit("changeTurns", room);
 		io.to(nextUser.socketID).emit("startTurn");
+
+		// Timer
+		setInterval(() => {
+			if (time < MAX_TIME_PER_TURN - 1) {
+				time++;
+				io.to(room.ID).emit("updateTime", MAX_TIME_PER_TURN - time);
+			} else {
+				time = 0;
+				nextTurn();
+			}
+		}, 1000);
 	}
 
 	function nextTurn() {
-		// End the current user's turn
-		io.to(user.socketID).emit("endTurn");
-		user.usersTurn = false;
+		for (let i = 0; i < room.users.length; i++) {
+			if (room.users[i].usersTurn) {
+				// End the current user's turn
+				io.to(room.users[i].socketID).emit("endTurn");
+				room.users[i].usersTurn = false;
 
-		// Start the next user's turn
-		const nextIndex = (room.users.indexOf(user) + 1) % room.users.length;
-		const nextUser = room.users[nextIndex];
-		nextUser.usersTurn = true;
-		io.to(room.ID).emit("changeTurns", room);
-		io.to(nextUser.socketID).emit("startTurn");
+				// Start the next user's turn
+				const nextIndex = (i + 1) % room.users.length;
+				const nextUser = room.users[nextIndex];
+				nextUser.usersTurn = true;
+				io.to(room.ID).emit("changeTurns", room);
+				io.to(nextUser.socketID).emit("startTurn");
+				break;
+			}
+		}
 	}
 
 	socket.on("snippet", (snippet, validate) => {
 		console.log(room.started && user.usersTurn);
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
-			console.log("snippet: " + snippet);
+			console.log(`snippet: ${snippet}`);
 			const validSnippet = snippet.split(" ").length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
+
 			if (validSnippet) {
 				io.to(room.ID).emit("snippet", snippet, user.color);
 				nextTurn();
 				validate("");
 			} else {
-				validate("You may submit a maximum of " + MAX_WORDS_PER_TURN + " words and " + MAX_CHARS_PER_TURN + " characters in a turn");
+				validate(`You may submit a maximum of ${MAX_WORDS_PER_TURN} words and ${MAX_CHARS_PER_TURN} characters in a turn.`);
 			}
 		}
 	});

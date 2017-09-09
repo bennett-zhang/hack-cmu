@@ -5,8 +5,10 @@ $(() => {
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
 	const $snippetButton = $("#snippet-button");
+	let $timeLeft = $("#time-left");
 	let selfUser;
 	const $errors = $("#errors");
+	const MAX_TIME_PER_TURN = 10; // Make sure this agrees with index.js
 
 	function updateUsers(room) {
 		$users.empty();
@@ -21,7 +23,7 @@ $(() => {
 			}
 
 			if (user.usersTurn) {
-				timeBadge = `<span class="badge badge-pill badge-warning"> ${30} seconds left </span>`;
+				timeBadge = `<span id="time-left" class="badge badge-pill badge-warning"> ${MAX_TIME_PER_TURN} seconds left </span>`;
 			}
 
 			$users.append(`
@@ -31,12 +33,19 @@ $(() => {
 					${meBadge}
 					${timeBadge}
 				</li>`);
+
+			$timeLeft = $("#time-left");
 		}
 
 		if (room.usersNeeded > 0) {
 			$users.append(`<li class="list-group-item">${room.usersNeeded} users needed</li>`);
 		}
 	}
+
+	// Update timer badge
+	socket.on("updateTime", timeLeft => {
+		$timeLeft.text(` ${timeLeft} seconds left `);
+	});
 
 	// A player will receive "start_turn" when it reaches their turn
 	socket.on("startTurn", () => {
@@ -65,6 +74,7 @@ $(() => {
 	});
 
 	socket.on("changeTurns", room => {
+		console.log(room.users);
 		updateUsers(room);
 	});
 
