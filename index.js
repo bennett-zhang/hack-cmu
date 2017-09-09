@@ -5,21 +5,22 @@ const app = express();
 const http = require("http").Server(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(http);
-const mongoose = require('mongoose');		// interact with MongoDB
-const morgan = require('morgan');             // log requests to the console (express4)
-const bodyParser = require('body-parser');    // pull information from HTML POST (express4)
-const methodOverride = require('method-override'); // simulate DELETE and PUT (express4)
+const mongoose = require("mongoose"); // interact with MongoDB
+const morgan = require("morgan"); // log requests to the console (express4)
+const bodyParser = require("body-parser"); // pull information from HTML POST (express4)
+const methodOverride = require("method-override"); // simulate DELETE and PUT (express4)
 
 
 app.use(express.static("public"));
-app.use(morgan('dev'));                                         // log every request to the console
-app.use(bodyParser.urlencoded({'extended':'true'}));            // parse application/x-www-form-urlencoded
-app.use(bodyParser.json());                                     // parse application/json
-app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
+app.use(morgan("dev")); // log every request to the console
+app.use(bodyParser.urlencoded({
+	"extended": "true"
+})); // parse application/x-www-form-urlencoded
+app.use(bodyParser.json()); // parse application/json
+app.use(bodyParser.json({
+	type: "application/vnd.api+json"
+})); // parse application/vnd.api+json as json
 app.use(methodOverride());
-
-
-
 
 
 const MIN_NAME_LENGTH = 3;
@@ -222,30 +223,22 @@ io.on("connection", socket => {
 	});
 });
 
-
-
-
-
-
-
-
-
-//mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
-
-
-var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
+/*
+Connecting to the database
+*/
+const promise = mongoose.connect("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive", {
 	useMongoClient: true,
 });
 
-promise.then(function(db) {
-	connection.openUri('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
+promise.then(db => {
+	connection.openUri("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive");
 });
 
 
 // define schema ============================
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var storySchema = new Schema({
+const storySchema = new Schema({
 	title: String,
 	text: String,
 	datetime: Date,
@@ -255,7 +248,7 @@ var storySchema = new Schema({
 	netvotes: Number
 });
 
-var Story = mongoose.model('Story', storySchema);
+const Story = mongoose.model("Story", storySchema);
 
 
 
@@ -263,13 +256,13 @@ var Story = mongoose.model('Story', storySchema);
 
 
 // get all stories
-app.get('/api/stories', function(req, res) {
-	
+app.get("/api/stories", (req, res) => {
+
 	// use mongoose to get all stories in the database
-	Story.find(function(err, stories) {
+	Story.find((err, stories) => {
 
 		// if error in retrieving, send that error
-		if(err) {
+		if (err) {
 			res.send(err);
 		}
 
@@ -278,13 +271,15 @@ app.get('/api/stories', function(req, res) {
 });
 
 // get one story
-app.get('/api/stories/:story_id', function(req, res) {
+app.get("/api/stories/:story_id", (req, res) => {
 
 	// use mongoose to get one story in the database
-	Story.findOne({_id : req.params.story_id}, function(err, story) {
+	Story.findOne({
+		_id: req.params.story_id
+	}, (err, story) => {
 
 		// if error in retrieving, send that error
-		if(err) {
+		if (err) {
 			res.send(err);
 		}
 
@@ -293,10 +288,9 @@ app.get('/api/stories/:story_id', function(req, res) {
 });
 
 // create a story and send all stories after creation
-app.post('/api/stories', function(req, res) {
+app.post("/api/stories", (req, res) => {
 
 	Story.create({
-
 		title: req.body.title,
 		text: req.body.text,
 		datetime: req.body.datetime,
@@ -305,31 +299,31 @@ app.post('/api/stories', function(req, res) {
 		downvotes: req.body.downvotes,
 		netvotes: req.body.netvotes
 
-	}, function(err, story) {
-		if(err) {
+	}, (err, story) => {
+		if (err) {
 			res.send(err);
 		} else {
-			res.status(200).send('Success! Story submitted.');
+			res.status(200).send("Success! Story submitted.");
 		}
 	});
 });
 
 // delete a story
-app.delete('/api/stories/:story_id', function(req, res) {
+app.delete("/api/stories/:story_id", (req, res) => {
 	Story.remove({
-		_id : req.params.story_id
-	}, function(err, story) {
-		if(err) {
+		_id: req.params.story_id
+	}, (err, story) => {
+		if (err) {
 			res.send(err);
 		}
 
 		// get and return all stories after deleting one
-		Story.find(function(err, stories) {
-                if(err) {
-                    res.send(err)
-                }
-                res.json(stories);
-        });
+		Story.find((err, stories) => {
+			if (err) {
+				res.send(err)
+			}
+			res.json(stories);
+		});
 	});
 });
 

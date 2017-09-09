@@ -7,7 +7,6 @@ $(() => {
 	const $snippetButton = $("#snippet-button");
 	let selfUser;
 	const $errors = $("#errors");
-	$errors.hide();
 
 	function updateUsers(room) {
 		$users.empty();
