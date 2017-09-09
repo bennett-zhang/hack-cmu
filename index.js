@@ -200,30 +200,21 @@ io.on("connection", socket => {
         var wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
 			  io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
         if (isOver) {
-					console.log('get the fuck out');
-					var redirect = 'archive.html'
-        	var request = require('request');
-					request.post(
-    				'/api/stories',
-    				{	json: {
-							title: room.storyText.split(' ').slice(0,5).join(" "),
-							text: room.storyText,
-							datetime: new Date().toLocaleString(),
-							wordcount: storyLength,
-							upvotes: 0,
-							downvotes: 0,
-							netvotes: 0
-						} },
-    				function (error, response, body) {
-        			if (!error && response.statusCode == 200) {
-            		var id = response.data;
-								if (id) {
-									redirect += '#!/stories/'+id;
-								}
-        			}
-    				}
-					);     
-          io.to(room.ID).emit("end game", archiveUrl);
+					var redirect = 'archive.html';
+					Story.create({
+						title: room.storyText.split(' ').slice(0,5).join(" "),
+						text: room.storyText,
+						datetime: new Date().toLocaleString(),
+						wordcount: storyLength,
+						upvotes: 0,
+						downvotes: 0,
+						netvotes: 0
+					}, (error, story) => { 
+							var id = story._id.toString();
+							redirect += '#!/stories/'+id;
+							io.to(room.ID).emit("end game", redirect);
+					});     
+          io.to(room.ID).emit("end game", redirect);
         }
         nextTurn();
       } else {
