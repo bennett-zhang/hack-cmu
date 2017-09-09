@@ -31,7 +31,8 @@ const rooms = [];
 	ID,
 	users, // Array of the users inside the room
 	usersNeeded, // How many users need to join before the game can start
-	started // True when enough users have joined and the game has started
+	started, // True when enough users have joined and the game has started
+  storyText // The plaintext version of the story
 }
 */
 
@@ -118,7 +119,8 @@ io.on("connection", socket => {
 		room = {
 			ID: rooms.length,
 			users: [],
-			started: false
+			started: false,
+      storyText: "",
 		};
 		rooms.push(room);
 	}
@@ -166,11 +168,20 @@ io.on("connection", socket => {
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
 			console.log("snippet: " + snippet);
-      var validSnippet = snippet.split(' ').length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
+      var numWords = snippet.split(' ').length;
+      var validSnippet = numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
       if (validSnippet) {
-			  io.to(room.ID).emit("snippet", snippet, user.color);
+        room.storyText += ' '+snippet;
+        var storyLength = room.storyText.split(' ').length;
+        var isOver = storyLength >= MAX_WORD_COUNT;
+        var wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
+			  io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
+        if (isOver) {
+          //archive story here
+          var archiveUrl = '';
+          io.to(room.ID).emit("end game", archiveUrl);
+        }
         nextTurn();
-        validate('');
       } else {
         validate('You may submit a maximum of '+MAX_WORDS_PER_TURN+' words and '+MAX_CHARS_PER_TURN+' characters in a turn');
       }

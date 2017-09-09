@@ -55,12 +55,19 @@ $(() => {
 		socket.emit("snippet", $snippetInput.val().trim(), function (msg) {
       console.log('ready to display message');
       $errors.val(msg);
+      $errors.css('color: red;');
     });
 		$snippetInput.val("");
 		return false;
 	});
 
-	socket.on("snippet", (snippet, color) => {
+	socket.on("snippet", (snippet, color, wordsLeft) => {
+    $errors.val(wordsLeft+' words left in the story');
+    $errors.css('color: black;');
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
+  });
+
+  socket.on("end game", archiveUrl => {
+    //archive
   });
 });
