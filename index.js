@@ -5,27 +5,28 @@ const app = express();
 const http = require("http").Server(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(http);
-const mongoose = require('mongoose');		// interact with MongoDB
-const morgan = require('morgan');             // log requests to the console (express4)
-const bodyParser = require('body-parser');    // pull information from HTML POST (express4)
-const methodOverride = require('method-override'); // simulate DELETE and PUT (express4)
+const mongoose = require("mongoose"); // interact with MongoDB
+const morgan = require("morgan"); // log requests to the console (express4)
+const bodyParser = require("body-parser"); // pull information from HTML POST (express4)
+const methodOverride = require("method-override"); // simulate DELETE and PUT (express4)
 
 
 app.use(express.static("public"));
-app.use(morgan('dev'));                                         // log every request to the console
-app.use(bodyParser.urlencoded({'extended':'true'}));            // parse application/x-www-form-urlencoded
-app.use(bodyParser.json());                                     // parse application/json
-app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
+app.use(morgan("dev")); // log every request to the console
+app.use(bodyParser.urlencoded({
+	"extended": "true"
+})); // parse application/x-www-form-urlencoded
+app.use(bodyParser.json()); // parse application/json
+app.use(bodyParser.json({
+	type: "application/vnd.api+json"
+})); // parse application/vnd.api+json as json
 app.use(methodOverride());
-
-
-
 
 
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
-const MIN_ROOM_SIZE = 3;
-const MAX_ROOM_SIZE = 5; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
+const MIN_ROOM_SIZE = 2;
+const MAX_ROOM_SIZE = 3; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
 const MAX_WORD_COUNT = 300;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
@@ -46,7 +47,8 @@ const rooms = [];
 	ID,
 	users, // Array of the users inside the room
 	usersNeeded, // How many users need to join before the game can start
-	started // True when enough users have joined and the game has started
+	started, // True when enough users have joined and the game has started
+  storyText // The plaintext version of the story
 }
 */
 
@@ -133,7 +135,8 @@ io.on("connection", socket => {
 		room = {
 			ID: rooms.length,
 			users: [],
-			started: false
+			started: false,
+      storyText: "",
 		};
 		rooms.push(room);
 	}
@@ -181,19 +184,29 @@ io.on("connection", socket => {
 		io.to(room.ID).emit("changeTurns", room);
 		io.to(nextUser.socketID).emit("startTurn");
 	}
-  
+
 	socket.on("snippet", (snippet, validate) => {
 		console.log(room.started && user.usersTurn);
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
 			console.log("snippet: " + snippet);
-      var validSnippet = snippet.split(' ').length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
+      var numWords = snippet.split(' ').length;
+      var isEmpty = snippet.replace(' ','').length == 0;
+      var validSnippet = !isEmpty && numWords <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
       if (validSnippet) {
-			  io.to(room.ID).emit("snippet", snippet, user.color);
+        room.storyText += ' '+snippet;
+        var storyLength = room.storyText.split(' ').length;
+        var isOver = storyLength >= MAX_WORD_COUNT;
+        var wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
+			  io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
+        if (isOver) {
+          //archive story here
+          var archiveUrl = '';
+          io.to(room.ID).emit("end game", archiveUrl);
+        }
         nextTurn();
-        validate('');
       } else {
-        validate('You may submit a maximum of '+MAX_WORDS_PER_TURN+' words and '+MAX_CHARS_PER_TURN+' characters in a turn');
+        validate('You must submit between 1 and '+MAX_WORDS_PER_TURN+' words and a maximum of '+MAX_CHARS_PER_TURN+' characters in a turn');
       }
 		}
 	});
@@ -222,6 +235,7 @@ io.on("connection", socket => {
 	});
 });
 
+<<<<<<< HEAD
 
 
 
@@ -229,18 +243,24 @@ io.on("connection", socket => {
 
 
 var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
+=======
+/*
+Connecting to the database
+*/
+const promise = mongoose.connect("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive", {
+>>>>>>> 23dfc70a0188442d9f0952dbec01e37eb39bb9b6
 	useMongoClient: true,
 });
 
-promise.then(function(db) {
-	connection.openUri('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
+promise.then(db => {
+	connection.openUri("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive");
 });
 
 
 // define schema ============================
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var storySchema = new Schema({
+const storySchema = new Schema({
 	title: String,
 	text: String,
 	datetime: Date,
@@ -250,7 +270,7 @@ var storySchema = new Schema({
 	netvotes: Number
 });
 
-var Story = mongoose.model('Story', storySchema);
+const Story = mongoose.model("Story", storySchema);
 
 
 
@@ -258,13 +278,13 @@ var Story = mongoose.model('Story', storySchema);
 
 
 // get all stories
-app.get('/api/stories', function(req, res) {
-	
+app.get("/api/stories", (req, res) => {
+
 	// use mongoose to get all stories in the database
-	Story.find(function(err, stories) {
+	Story.find((err, stories) => {
 
 		// if error in retrieving, send that error
-		if(err) {
+		if (err) {
 			res.send(err);
 		}
 
@@ -273,13 +293,15 @@ app.get('/api/stories', function(req, res) {
 });
 
 // get one story
-app.get('/api/stories/:story_id', function(req, res) {
+app.get("/api/stories/:story_id", (req, res) => {
 
 	// use mongoose to get one story in the database
-	Story.findOne({_id : req.params.story_id}, function(err, story) {
+	Story.findOne({
+		_id: req.params.story_id
+	}, (err, story) => {
 
 		// if error in retrieving, send that error
-		if(err) {
+		if (err) {
 			res.send(err);
 		}
 
@@ -288,10 +310,9 @@ app.get('/api/stories/:story_id', function(req, res) {
 });
 
 // create a story and send all stories after creation
-app.post('/api/stories', function(req, res) {
+app.post("/api/stories", (req, res) => {
 
 	Story.create({
-
 		title: req.body.title,
 		text: req.body.text,
 		datetime: req.body.datetime,
@@ -300,31 +321,35 @@ app.post('/api/stories', function(req, res) {
 		downvotes: req.body.downvotes,
 		netvotes: req.body.netvotes
 
-	}, function(err, story) {
-		if(err) {
+	}, (err, story) => {
+		if (err) {
 			res.send(err);
 		} else {
+<<<<<<< HEAD
 			res.status(200).send('Success! Story submitted. Id: ' + story._id);
+=======
+			res.status(200).send("Success! Story submitted.");
+>>>>>>> 23dfc70a0188442d9f0952dbec01e37eb39bb9b6
 		}
 	});
 });
 
 // delete a story
-app.delete('/api/stories/:story_id', function(req, res) {
+app.delete("/api/stories/:story_id", (req, res) => {
 	Story.remove({
-		_id : req.params.story_id
-	}, function(err, story) {
-		if(err) {
+		_id: req.params.story_id
+	}, (err, story) => {
+		if (err) {
 			res.send(err);
 		}
 
 		// get and return all stories after deleting one
-		Story.find(function(err, stories) {
-                if(err) {
-                    res.send(err)
-                }
-                res.json(stories);
-        });
+		Story.find((err, stories) => {
+			if (err) {
+				res.send(err)
+			}
+			res.json(stories);
+		});
 	});
 });
 
