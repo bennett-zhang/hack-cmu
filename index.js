@@ -166,20 +166,20 @@ io.on("connection", socket => {
 		io.to(room.ID).emit("changeTurns", room);
 		io.to(nextUser.socketID).emit("startTurn");
 	}
-  
+
 	socket.on("snippet", (snippet, validate) => {
 		console.log(room.started && user.usersTurn);
 		// Only send snippets if the game has begun and it's the user's turn
 		if (room.started && user.usersTurn) {
 			console.log("snippet: " + snippet);
-      var validSnippet = snippet.split(' ').length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
-      if (validSnippet) {
-			  io.to(room.ID).emit("snippet", snippet, user.color);
-        nextTurn();
-        validate('');
-      } else {
-        validate('You may submit a maximum of '+MAX_WORDS_PER_TURN+' words and '+MAX_CHARS_PER_TURN+' characters in a turn');
-      }
+			const validSnippet = snippet.split(" ").length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
+			if (validSnippet) {
+				io.to(room.ID).emit("snippet", snippet, user.color);
+				nextTurn();
+				validate("");
+			} else {
+				validate("You may submit a maximum of " + MAX_WORDS_PER_TURN + " words and " + MAX_CHARS_PER_TURN + " characters in a turn");
+			}
 		}
 	});
 

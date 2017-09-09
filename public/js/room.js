@@ -6,7 +6,8 @@ $(() => {
 	const $snippetInput = $("#snippet-input");
 	const $snippetButton = $("#snippet-button");
 	let selfUser;
-	const $errors = $('#errors');
+	const $errors = $("#errors");
+	$errors.hide();
 
 	function updateUsers(room) {
 		$users.empty();
@@ -73,9 +74,14 @@ $(() => {
 	});
 
 	$form.submit(() => {
-		socket.emit("snippet", $snippetInput.val().trim(), function(msg) {
-			console.log('ready to display message');
-			$errors.val(msg);
+		socket.emit("snippet", $snippetInput.val().trim(), msg => {
+			console.log("ready to display message");
+			if (msg) {
+				$errors.show();
+				$errors.text(msg);
+			} else {
+				$errors.hide();
+			}
 		});
 		$snippetInput.val("");
 		return false;
