@@ -169,10 +169,11 @@ io.on("connection", socket => {
 		io.to(room.ID).emit("leave", room);
 	});
 
-	socket.on("snippet", snippet => {
+	socket.on("snippet", (snippet, validateCallback) => {
 		// Only send snippets if the game has begun
 		if (room.started) {
 			console.log("snippet: " + snippet);
+      var validSnippet = snippet.split(' ').length <= MAX_WORDS_PER_TURN && snippet.length <= MAX_CHARS_PER_TURN;
       if (validSnippet) {
 			  io.to(room.ID).emit("snippet", snippet, user.color); //I changed this from "io.emit" --> "io.to(room.ID).emit"
         // End that player's turn and start the next player's turn.
@@ -190,9 +191,9 @@ io.on("connection", socket => {
             i = users.length;
           }
         }
-        return "";
+        validateCallback('');
       } else {
-        return 'You may submit a maximum of '+MAX_WORDS_PER_TURN+'words and '+MAX_CHARS_PER_TURN+' characters in a turn';
+        validateCallback('You may submit a maximum of '+MAX_WORDS_PER_TURN+' words and '+MAX_CHARS_PER_TURN+' characters in a turn');
       }
 		}
 	});

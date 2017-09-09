@@ -12,3 +12,5 @@ body {
 .list-group-item {
 	overflow: scroll;
 }
+
+#errors { border: 0; padding: 10px; width: 90%; margin-right: .5%; color: red; }

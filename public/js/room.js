@@ -1,4 +1,4 @@
-$(() => :Tab{
+$(() => {
 	const socket = io();
 	const $users = $("#users");
 	const $story = $("#story");
@@ -55,7 +55,8 @@ $(() => :Tab{
 	});
 
 	$form.submit(() => {
-		socket.emit("snippet", $snippetInput.val().trim(), function(msg) {
+		socket.emit("snippet", $snippetInput.val().trim(), function (msg) {
+      console.log('ready to display message');
       $errors.val(msg);
     });
 		$snippetInput.val("");
@@ -65,3 +66,4 @@ $(() => :Tab{
 	socket.on("snippet", (snippet, color) => {
 		$story.append(`<span style="color: ${color}"> ${snippet}</span>`);
   });
+});
