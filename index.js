@@ -27,7 +27,7 @@ const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 20; // When changing this, make sure to update the maxlength attribute for the text box
 const MIN_ROOM_SIZE = 2;
 const MAX_ROOM_SIZE = 3; // MAX ROOM SIZE IS 5 ONLY FOR TESTING PURPOSES
-const MAX_WORD_COUNT = 300;
+const MAX_WORD_COUNT = 5;
 const MIN_ARCHIVABLE_WORD_COUNT = 200;
 const MAX_WORDS_PER_TURN = 3;
 const MAX_CHARS_PER_TURN = 20; // When changing this, make sure to update the maxlength attribute for the text box
@@ -200,8 +200,28 @@ io.on("connection", socket => {
         var wordsLeft = isOver ? 0 : Math.max(MAX_WORDS_PER_TURN, MAX_WORD_COUNT - storyLength);
 			  io.to(room.ID).emit("snippet", snippet, user.color, wordsLeft);
         if (isOver) {
-          //archive story here
-          var archiveUrl = '';
+					var redirect = 'archive.html'
+        	var request = require('request');
+					request.post(
+    				'/api/stories',
+    				{	json: {
+							title: room.storyText.split(' ').slice(0,5).join(" "),
+							text: room.storyText,
+							datetime: new Date().toLocaleString(),
+							wordcount: storyLength,
+							upvotes: 0,
+							downvotes: 0,
+							netvotes: 0
+						} },
+    				function (error, response, body) {
+        			if (!error && response.statusCode == 200) {
+            		var id = response.data;
+								if (id) {
+									redirect += '#!/stories/'+id;
+								}
+        			}
+    				}
+					);     
           io.to(room.ID).emit("end game", archiveUrl);
         }
         nextTurn();
@@ -315,7 +335,7 @@ app.post("/api/stories", (req, res) => {
 		if (err) {
 			res.send(err);
 		} else {
-			res.status(200).send("Success! Story submitted.");
+			res.status(200).send(story._id);
 		}
 	});
 });

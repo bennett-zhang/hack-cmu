@@ -93,6 +93,8 @@ $(() => {
   });
 
   socket.on("end game", archiveUrl => {
-    //archive
+    $snippetInput.hide();
+		$snippetButton.hide();
+		$words.val('This story is now ended. You can view it <a href="'+archiveUrl+'">here</a>.');
   });
 });
