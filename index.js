@@ -235,26 +235,20 @@ io.on("connection", socket => {
 	});
 });
 
-<<<<<<< HEAD
 
 
 
 
-
-
-var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
-=======
 /*
 Connecting to the database
 */
-const promise = mongoose.connect("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive", {
->>>>>>> 23dfc70a0188442d9f0952dbec01e37eb39bb9b6
-	useMongoClient: true,
-});
-
-promise.then(db => {
-	connection.openUri("mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive");
-});
+var promise = mongoose.connect('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive', {
+  	useMongoClient: true,
+  });
+ 
+ promise.then(function(db) {
+ 	connection.openUri('mongodb://abdn:morewood35@ds145828.mlab.com:45828/pineapple-express-archive');
+ });
 
 
 // define schema ============================
@@ -325,11 +319,8 @@ app.post("/api/stories", (req, res) => {
 		if (err) {
 			res.send(err);
 		} else {
-<<<<<<< HEAD
-			res.status(200).send('Success! Story submitted. Id: ' + story._id);
-=======
-			res.status(200).send("Success! Story submitted.");
->>>>>>> 23dfc70a0188442d9f0952dbec01e37eb39bb9b6
+			res.status(200).send(story._id);
+
 		}
 	});
 });
