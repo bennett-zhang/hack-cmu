@@ -5,8 +5,8 @@ $(() => {
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
 	const $snippetButton = $("#snippet-button");
-
 	let selfUser;
+	const $errors = $('#errors');
 
 	function updateUsers(room) {
 		$users.empty();
@@ -73,7 +73,10 @@ $(() => {
 	});
 
 	$form.submit(() => {
-		socket.emit("snippet", $snippetInput.val().trim());
+		socket.emit("snippet", $snippetInput.val().trim(), function(msg) {
+			console.log('ready to display message');
+			$errors.val(msg);
+		});
 		$snippetInput.val("");
 		return false;
 	});
