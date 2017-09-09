@@ -4,7 +4,7 @@ $(() => {
 	const $story = $("#story");
 	const $form = $("#form");
 	const $snippetInput = $("#snippet-input");
-	const $snippetButton = $("#snippet-button");
+	const $snippetButton = $("#snippet-button")
 
 	function updateUsers(room) {
 		$users.empty();
@@ -20,10 +20,30 @@ $(() => {
 		if (room.usersNeeded > 0) {
 			$users.append(`<li class="list-group-item">${room.usersNeeded} users needed</li>`);
 		} else {
-			$snippetInput.removeAttr("disabled");
-			$snippetButton.removeAttr("disabled");
+			//$snippetInput.removeAttr("disabled");
+			//$snippetButton.removeAttr("disabled");
 		}
 	}
+
+
+	//A player will receive "start_turn" when it reaches their turn
+	socket.on("start_turn", function () {
+		//Add big textbox or pop-up saying "IT'S YOUR TURN!"
+		//Include visual timer display to count down time left
+		console.log("Your turn!")
+
+		$snippetInput.removeAttr("disabled");
+		$snippetButton.removeAttr("disabled");
+	});
+
+	//A player will receive "end_turn" once they've entered a snippet or time runs out
+	socket.on("end_turn", function() {
+		console.log("Your turn is over.")
+
+		$snippetInput.attr("disabled", true);
+		$snippetButton.attr("disabled", true);
+	});
+
 
 	socket.on("join", room => {
 		updateUsers(room);
