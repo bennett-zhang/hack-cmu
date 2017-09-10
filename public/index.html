@@ -18,14 +18,15 @@
 	<div class="container vertical-center">
 		<div class="row justify-content-center">
 			<div class="col-6">
-				<h1 class="display-4">Bit Stories</h1>
+				<h4 class="display-4 mb-3">Bit Stories</h4>
+				<p class="mb-4">Bit Stories is a collaborative story creation game. Join a virtual room with 7 other people, and take turns adding bits of text to the story. When the story reaches 300 words, it is complete.</p>
+				<p>Enter a nickname and jump in!</p>
 				<form action="/create-user" method="post">
 					<div class="form-group">
-						<label for="username-input">Username</label>
-						<input type="text" id="username-input" name="username-input" placeholder="Nick" maxlength="20" class="form-control" autofocus>
+						<input type="text" id="username-input" name="username-input" placeholder="Nickname" maxlength="20" class="form-control" autofocus>
 					</div>
 					<input type="submit" value="Start" class="btn btn-primary">
-					<a href="archive.html" class="btn btn-outline-primary">View archive</a>
+					<a href="archive.html" class="btn btn-outline-primary">View stories</a>
 				</form>
 			</div>
 		</div>
