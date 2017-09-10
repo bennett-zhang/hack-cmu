@@ -8,7 +8,7 @@ component('storyForm', {
 
         // on form submit, send data to server
         $scope.createStory = function() {
-
+            
             $scope.formData.title = getTitle($scope.formData.text);
             $scope.formData.datetime = new Date();
             $scope.formData.wordcount = getWordCount($scope.formData.text);
@@ -24,7 +24,7 @@ component('storyForm', {
                     // clear form for next submission
                     $scope.formData = {};
 
-                    alert(response.data);
+                    alert("Success! New story created with ID: " + response.data);
 
                     console.log(response);
                 },

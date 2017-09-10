@@ -43,11 +43,6 @@ angular.
         }
 
         $scope.getDateString = function(dateObj) {
-            // return dateObj.getMonth() + 1 + "/" +
-            //         dateObj.getDay() + "/" +
-            //         dateObj.getFullYear() + "\n" +
-            //         dateObj.getHours() + ":" +
-            //         dateObj.getMinutes();
            
             return dateObj.substring(0, 10) + " " + 
             dateObj.substring(11, 19);

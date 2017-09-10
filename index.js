@@ -303,6 +303,7 @@ app.get("/api/stories/:story_id", (req, res) => {
 	});
 });
 
+
 // create a story and send all stories after creation
 app.post("/api/stories", (req, res) => {
 

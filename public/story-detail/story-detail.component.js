@@ -30,6 +30,14 @@ component('storyDetail', {
         };
 
 
+        $scope.getDateString = function(dateObj) {
+           
+            return dateObj.substring(0, 10) + " " + 
+            dateObj.substring(11, 19);
+                
+        }
+
+
 
 	}]
 });
